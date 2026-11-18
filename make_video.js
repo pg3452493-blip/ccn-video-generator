@@ -200,16 +200,16 @@ async function startRendering() {
         await page.setContent(pausedHtml, { waitUntil: 'networkidle0', timeout: 90000 });
 
         console.log("🎥 Camera Action! Recording shuru...");
-        const stream = await getStream(page, { audio: false, video: true, videoBitsPerSecond: 15000000, frameSize: 60 });
+        const stream = await getStream(page, { audio: false, video: true, videoBitsPerSecond: 10000000, frameSize: 30 });
 
         ffmpeg(stream)
             .inputFormat('webm')
             .outputOptions([
                 '-c:v libx264', 
-                '-preset medium', 
-                '-crf 20', 
+                '-preset ultrafast', 
+                '-crf 23', 
                 '-pix_fmt yuv420p', 
-                '-r 60', 
+                '-r 30', 
                 '-vsync cfr', 
                 `-t ${recordDuration}`
             ])
