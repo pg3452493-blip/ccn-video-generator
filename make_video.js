@@ -170,7 +170,7 @@ const myHtml = `
 
 async function startRendering() {
     const fps = 30;
-    const duration = 12; // 12 seconds video
+    const duration = 12; // 12 seconds video duration
     const totalFrames = fps * duration;
     const frameDir = path.join(__dirname, 'frames');
 
@@ -192,7 +192,7 @@ async function startRendering() {
     const pausedHtml = myHtml.replace('</head>', '<style id="freeze-anim"> * { animation-play-state: paused !important; } </style></head>');
     await page.setContent(pausedHtml, { waitUntil: 'networkidle0', timeout: 90000 });
 
-    console.log(`📸 Capturing ${totalFrames} frames... Yeh bilkul smooth banayega!`);
+    console.log(`📸 Capturing ${totalFrames} frames...`);
 
     // Animation unfreeze karke time ko control karenge
     await page.evaluate(() => {
@@ -205,7 +205,6 @@ async function startRendering() {
         const framePath = path.join(frameDir, `frame_${String(i).padStart(4, '0')}.png`);
         await page.screenshot({ path: framePath, type: 'png' });
         
-        // Next frame ke liye 33.3ms (1/30 sec) aage badhenge
         if (i < totalFrames - 1) {
             await new Promise(resolve => setTimeout(resolve, 33.33));
         }
@@ -223,13 +222,13 @@ async function startRendering() {
             '-c:v libx264',
             '-preset medium',
             '-crf 18',
-            '-pix_fmt yuv420p'
+            '-pix_fmt yuv420p',
+            '-r 30',
+            '-t 12' // 👈 Video ki exact speed lock karne ke liye duration 12 seconds par set kar di hai
         ])
-        .fps(fps)
         .save(fileName)
         .on('end', () => {
             console.log(`🎉 SUCCESS! Video ban gayi: ${fileName}`);
-            // Cleanup frames folder
             fs.rmSync(frameDir, { recursive: true, force: true });
             process.exit(0);
         })
