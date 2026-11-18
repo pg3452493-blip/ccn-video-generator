@@ -1,0 +1,31 @@
+name: Generate Reel on Cloud
+
+on:
+  workflow_dispatch: # Isse tu mobile ke ek click se ise chalu kar sakega
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies & FFmpeg
+        run: |
+          npm install
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Run Video Generator Script
+        run: node server.js
+
+      - name: Save Generated Video
+        uses: actions/upload-artifact@v3
+        with:
+          name: ccn-reel
+          path: '*.mp4'
