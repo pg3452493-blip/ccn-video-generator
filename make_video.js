@@ -42,7 +42,6 @@ const myHtml = `
         
         .footer { position: absolute; bottom: 40px; width: 100%; display: flex; justify-content: space-around; align-items: center; z-index: 20; }
         
-        /* 🚀 SOCIAL ICONS FLYING ANIMATION (Ab turant screen par aayenge aur ruk jayenge) */
         .socials { display: flex; gap: 30px; }
         .icon { width: 70px; height: 70px; background: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 40px; opacity: 0; animation: flyInIcons 1.5s ease-out forwards; }
         .icon.fb { animation-delay: 0.2s; color: #1877F2; } 
@@ -68,7 +67,6 @@ const myHtml = `
         .s2-text.left { left: 40px; animation: s2LeftText 12s infinite; }
         .s2-text.right { right: 40px; animation: s2RightText 12s infinite; }
         
-        /* 🚀 NEXT SCORE BOX (Arrows ke baad aayega) */
         .next-score-box { position: absolute; top: 230px; left: 50%; transform: translateX(-50%); width: 600px; background: rgba(0, 0, 0, 0.8); border: 5px solid #00ff00; text-align: center; padding: 15px; opacity: 0; animation: s2BoxAnim 12s infinite; z-index: 3; }
         .next-score-box h2 { color: #00ff00; font-size: 50px; letter-spacing: 5px; margin-bottom: 5px; }
         .next-score-box .runs { color: #fff; font-size: 70px; text-shadow: 0 0 10px #fff; }
@@ -109,7 +107,6 @@ const myHtml = `
         
         @keyframes s2TitleAnim { 0%, 42% { opacity: 0; letter-spacing: 50px; } 48%, 100% { opacity: 1; letter-spacing: 15px; } }
 
-        /* 🚀 ICONS FLYING ANIMATION (Hawa mein udte hue screen par aakar fix ho jayenge) */
         @keyframes flyInIcons {
             0% { transform: translateX(-350px) translateY(150px) rotate(-360deg) scale(0.1); opacity: 0; }
             70% { transform: translateX(15px) translateY(-10px) rotate(15deg) scale(1.1); opacity: 1; }
@@ -182,12 +179,13 @@ async function startRendering() {
     try {
         const browser = await launch({
             executablePath: puppeteer.executablePath(),
-            headless: true,
+            headless: true, // 👈 Headless true for Linux runner
             defaultViewport: { width: 1080, height: 1920 },
             args: [
                 '--no-sandbox', 
                 '--disable-setuid-sandbox', 
-                '--enable-gpu',
+                '--disable-dev-shm-usage',
+                '--disable-gpu',
                 '--window-size=1080,1920', 
                 '--force-device-scale-factor=1',
                 '--hide-scrollbars'
@@ -239,6 +237,7 @@ async function startRendering() {
 
     } catch (err) {
         console.error("❌ Crash ho gaya:", err);
+        process.exit(1);
     }
 }
 
