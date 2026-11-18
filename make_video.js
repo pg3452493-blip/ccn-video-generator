@@ -204,6 +204,9 @@ async function startRendering() {
 
         ffmpeg(stream)
             .inputFormat('webm')
+            .inputOptions([
+                '-framerate 30' // 👈 Input side par exact 30 fps lock kar diya taaki frames drop na hon
+            ])
             .outputOptions([
                 '-c:v libx264', 
                 '-preset ultrafast', 
