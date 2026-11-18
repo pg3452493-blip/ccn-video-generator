@@ -1,5 +1,4 @@
-const puppeteer = require('puppeteer'); 
-const { launch, getStream } = require('puppeteer-stream');
+const puppeteer = require('puppeteer');
 const ffmpeg = require('fluent-ffmpeg');
 const path = require('path');
 const fs = require('fs');
@@ -170,75 +169,74 @@ const myHtml = `
 `;
 
 async function startRendering() {
-    const duration = 12; 
-    const recordDuration = duration + 1.5; 
+    const fps = 30;
+    const duration = 12; // 12 seconds video
+    const totalFrames = fps * duration;
+    const frameDir = path.join(__dirname, 'frames');
+
+    if (!fs.existsSync(frameDir)) {
+        fs.mkdirSync(frameDir);
+    }
+
+    console.log("🚀 Browser launch ho raha hai...");
+    const browser = await puppeteer.launch({
+        executablePath: puppeteer.executablePath(),
+        headless: true,
+        defaultViewport: { width: 1080, height: 1920 },
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
+    });
+
+    const page = await browser.newPage();
+    
+    // Animations ko shuru mein pause kar rahe hain taaki sync start ho
+    const pausedHtml = myHtml.replace('</head>', '<style id="freeze-anim"> * { animation-play-state: paused !important; } </style></head>');
+    await page.setContent(pausedHtml, { waitUntil: 'networkidle0', timeout: 90000 });
+
+    console.log(`📸 Capturing ${totalFrames} frames... Yeh bilkul smooth banayega!`);
+
+    // Animation unfreeze karke time ko control karenge
+    await page.evaluate(() => {
+        const style = document.getElementById('freeze-anim');
+        if (style) style.remove();
+    });
+
+    // Har frame ko exact time interval par capture karenge
+    for (let i = 0; i < totalFrames; i++) {
+        const framePath = path.join(frameDir, `frame_${String(i).padStart(4, '0')}.png`);
+        await page.screenshot({ path: framePath, type: 'png' });
+        
+        // Next frame ke liye 33.3ms (1/30 sec) aage badhenge
+        if (i < totalFrames - 1) {
+            await new Promise(resolve => setTimeout(resolve, 33.33));
+        }
+    }
+
+    await browser.close();
+    console.log("✅ Saare frames capture ho gaye! Ab FFmpeg video encode kar raha hai...");
+
     const fileName = `ccn_logic_final_${Date.now()}.mp4`;
 
-    console.log("🚀 Setup start ho raha hai...");
-
-    try {
-        const browser = await launch({
-            executablePath: puppeteer.executablePath(),
-            headless: true, 
-            defaultViewport: { width: 1080, height: 1920 },
-            args: [
-                '--no-sandbox', 
-                '--disable-setuid-sandbox', 
-                '--disable-dev-shm-usage',
-                '--disable-gpu',
-                '--window-size=1080,1920', 
-                '--force-device-scale-factor=1',
-                '--hide-scrollbars'
-            ]
+    ffmpeg()
+        .input(path.join(frameDir, 'frame_%04d.png'))
+        .inputFPS(fps)
+        .outputOptions([
+            '-c:v libx264',
+            '-preset medium',
+            '-crf 18',
+            '-pix_fmt yuv420p'
+        ])
+        .fps(fps)
+        .save(fileName)
+        .on('end', () => {
+            console.log(`🎉 SUCCESS! Video ban gayi: ${fileName}`);
+            // Cleanup frames folder
+            fs.rmSync(frameDir, { recursive: true, force: true });
+            process.exit(0);
+        })
+        .on('error', (err) => {
+            console.error("❌ FFmpeg Error:", err);
+            process.exit(1);
         });
-        
-        const page = await browser.newPage();
-        
-        console.log("⏳ HTML load ho raha hai...");
-        
-        const pausedHtml = myHtml.replace('</head>', '<style id="freeze-anim"> * { animation-play-state: paused !important; } </style></head>');
-        await page.setContent(pausedHtml, { waitUntil: 'networkidle0', timeout: 90000 });
-
-        console.log("🎥 Camera Action! Recording shuru...");
-        const stream = await getStream(page, { audio: false, video: true, videoBitsPerSecond: 10000000, frameSize: 30 });
-
-        ffmpeg(stream)
-            .inputFormat('webm')
-            .inputOptions([
-                '-framerate 30' // 👈 Input side par exact 30 fps lock kar diya taaki frames drop na hon
-            ])
-            .outputOptions([
-                '-c:v libx264', 
-                '-preset ultrafast', 
-                '-crf 23', 
-                '-pix_fmt yuv420p', 
-                '-r 30', 
-                '-vsync cfr', 
-                `-t ${recordDuration}`
-            ])
-            .save(`./${fileName}`)
-            .on('end', async () => {
-                console.log(`✅ SUCCESS! Video ban gayi: ${fileName}`);
-                await browser.close();
-                process.exit(0);
-            })
-            .on('error', async (err) => {
-                console.error("❌ FFmpeg Error:", err);
-                await browser.close();
-                process.exit(1);
-            });
-
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        console.log("🎬 ACTION! Animation Unfreeze!");
-        await page.evaluate(() => {
-            const style = document.getElementById('freeze-anim');
-            if (style) style.remove();
-        });
-
-    } catch (err) {
-        console.error("❌ Crash ho gaya:", err);
-        process.exit(1);
-    }
 }
 
 startRendering();
