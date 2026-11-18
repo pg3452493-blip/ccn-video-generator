@@ -179,7 +179,7 @@ async function startRendering() {
     try {
         const browser = await launch({
             executablePath: puppeteer.executablePath(),
-            headless: true, // 👈 Headless true for Linux runner
+            headless: true, 
             defaultViewport: { width: 1080, height: 1920 },
             args: [
                 '--no-sandbox', 
@@ -206,15 +206,12 @@ async function startRendering() {
             .inputFormat('webm')
             .outputOptions([
                 '-c:v libx264', 
-                '-preset ultrafast', 
-                '-crf 18', 
-                '-b:v 15M', 
-                '-maxrate 15M', 
-                '-bufsize 15M', 
+                '-preset medium', 
+                '-crf 20', 
                 '-pix_fmt yuv420p', 
                 '-r 60', 
-                `-t ${recordDuration}`,
-                '-vf', 'crop=ih*9/16:ih,scale=1080:1920'
+                '-vsync cfr', 
+                `-t ${recordDuration}`
             ])
             .save(`./${fileName}`)
             .on('end', async () => {
