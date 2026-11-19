@@ -3,6 +3,19 @@ const ffmpeg = require('fluent-ffmpeg');
 const path = require('path');
 const fs = require('fs');
 
+// 🚀 DYNAMIC SHEET DATA (FROM ENV / WORKFLOW INPUTS)
+const sheetData = {
+    playerName: process.env.PLAYER_NAME || 'SHAI HOPE',
+    team1: process.env.TEAM_1 || 'INDIA',
+    team2: process.env.TEAM_2 || 'AUSTRALIA',
+    nextScore: process.env.NEXT_SCORE || '15~ RUNS',
+    score1: process.env.SCORE_1 || '38',
+    score2: process.env.SCORE_2 || '15',
+    score3: process.env.SCORE_3 || '04',
+    score4: process.env.SCORE_4 || '45',
+    imageUrl: process.env.IMAGE_URL || 'https://images.unsplash.com/photo-1593341646782-e0b495cff86d?w=500'
+};
+
 // 🚀 SMART LOGO FINDER
 let logoBase64 = '';
 try {
@@ -20,7 +33,7 @@ try {
     console.error("❌ Error reading logo:", err);
 }
 
-// 🚀 TERA FINAL HTML ENGINE (ORIGINAL 12s TIMELINE) 🚀
+// 🚀 TERA FINAL HTML ENGINE (DYNAMIC DATA + 12s TIMELINE) 🚀
 const myHtml = `
 <!DOCTYPE html>
 <html lang="en">
@@ -34,7 +47,7 @@ const myHtml = `
         .video-container { width: 1080px; height: 1920px; background-color: #000; font-family: 'Impact', sans-serif; position: absolute; top: 0; left: 0; overflow: hidden; margin: 0; box-shadow: none; border: none; }
         
         .header-top { position: absolute; top: 60px; width: 100%; display: flex; justify-content: center; align-items: center; gap: 30px; z-index: 20; animation: headerDrop 12s linear forwards; }
-        .flag { width: 180px; height: 110px; border-radius: 8px; border: 3px solid #fff; display: flex; justify-content: center; align-items: center; font-size: 50px; color: white; box-shadow: 0 0 15px rgba(255,255,255,0.3); animation: floatFlag 3s ease-in-out infinite; }
+        .flag { min-width: 180px; padding: 0 20px; height: 110px; border-radius: 8px; border: 3px solid #fff; display: flex; justify-content: center; align-items: center; font-size: 42px; color: white; box-shadow: 0 0 15px rgba(255,255,255,0.3); animation: floatFlag 3s ease-in-out infinite; }
         .flag-ind { background: linear-gradient(to bottom, #FF9933, #FFF, #138808); color: #000080; }
         .flag-nz { background: #00247D; border-color: red; }
         .vs-text { font-size: 75px; font-style: italic; font-weight: bold; background: linear-gradient(to bottom, #FFDF00, #D4AF37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0px 5px 5px rgba(0,0,0,0.8)) drop-shadow(0px 0px 15px rgba(255,215,0,0.6)); animation: pulseVS 1.5s ease-in-out infinite alternate; margin: 0 20px; }
@@ -55,14 +68,14 @@ const myHtml = `
         .scene-1 { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; animation: scene1Visibility 12s linear forwards; }
         .s1-bg { position: absolute; width: 100%; height: 100%; object-fit: cover; opacity: 0.5; background: linear-gradient(to bottom, #1a1a1a, #000); z-index: 0; }
         .player-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; animation: s1ImageAnim 12s linear forwards; z-index: 1; overflow: hidden; }
-        .s1-text { position: absolute; top: 250px; font-size: 90px; color: #fff; writing-mode: vertical-rl; text-shadow: 2px 2px 0px #000, 0 0 20px red; letter-spacing: 20px; text-transform: uppercase; z-index: 3; }
+        .s1-text { position: absolute; top: 250px; font-size: 80px; color: #fff; writing-mode: vertical-rl; text-shadow: 2px 2px 0px #000, 0 0 20px red; letter-spacing: 14px; text-transform: uppercase; z-index: 3; }
         .s1-text.left { left: 40px; animation: s1LeftText 12s linear forwards; }
         .s1-text.right { right: 40px; animation: s1RightText 12s linear forwards; }
         .question-box { position: absolute; top: 1100px; left: 50%; transform: translateX(-50%); color: white; font-size: 110px; text-shadow: 0 0 15px black; white-space: nowrap; animation: s1QuestionBox 12s linear forwards; z-index: 4; }
         
         .scene-2 { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; opacity: 0; animation: scene2Visibility 12s linear forwards; }
         .s2-bg { position: absolute; width: 100%; height: 100%; object-fit: cover; opacity: 0.6; background: #002200; }
-        .s2-text { position: absolute; top: 250px; font-size: 70px; color: #00ff00; writing-mode: vertical-rl; letter-spacing: 20px; text-transform: lowercase; text-shadow: 2px 2px 5px #000; }
+        .s2-text { position: absolute; top: 250px; font-size: 65px; color: #00ff00; writing-mode: vertical-rl; letter-spacing: 14px; text-transform: lowercase; text-shadow: 2px 2px 5px #000; }
         .s2-text.left { left: 40px; animation: s2LeftText 12s linear forwards; }
         .s2-text.right { right: 40px; animation: s2RightText 12s linear forwards; }
         
@@ -116,9 +129,9 @@ const myHtml = `
 <body>
     <div class="video-container">
         <div class="header-top">
-            <div class="flag flag-ind" id="flag1">IND</div>
+            <div class="flag flag-ind" id="flag1">${sheetData.team1}</div>
             <div class="vs-text">V/S</div>
-            <div class="flag flag-nz" id="flag2">AUS</div>
+            <div class="flag flag-nz" id="flag2">${sheetData.team2}</div>
         </div>
         
         <div class="footer">
@@ -138,28 +151,28 @@ const myHtml = `
         <div class="scene-1">
             <div class="s1-bg"></div>
             <div class="player-img">
-                <img id="bg-img" src="https://images.unsplash.com/photo-1593341646782-e0b495cff86d?w=500" style="width: 100%; height: 100%; object-fit: cover; object-position: top; transform: translateY(100px) scale(0.9); filter: brightness(0.65);">
+                <img id="bg-img" src="${sheetData.imageUrl}" style="width: 100%; height: 100%; object-fit: cover; object-position: top; transform: translateY(100px) scale(0.9); filter: brightness(0.65);">
             </div>
-            <div class="s1-text left" id="p-name1">PLAYER</div>
-            <div class="s1-text right" id="p-name2">NAME</div>
+            <div class="s1-text left" id="p-name1">${sheetData.playerName}</div>
+            <div class="s1-text right" id="p-name2">${sheetData.playerName}</div>
             <div class="question-box">Agla score kya hoga?</div>
         </div>
 
         <div class="scene-2">
             <div class="s2-bg"></div>
-            <div class="s2-text left" id="p-name3">player</div>
-            <div class="s2-text right" id="p-name4">name</div>
+            <div class="s2-text left" id="p-name3">${sheetData.playerName}</div>
+            <div class="s2-text right" id="p-name4">${sheetData.playerName}</div>
             
             <div class="next-score-box">
                 <h2>NEXT SCORE</h2>
-                <div class="runs" id="runs-txt">15~ Runs</div>
+                <div class="runs" id="runs-txt">${sheetData.nextScore}</div>
             </div>
 
             <div class="score-pattern">
-                <div class="score-item item4"><div class="arrow">&#9650;</div><div class="num" id="pat4">45</div></div>
-                <div class="score-item item3"><div class="arrow">&#9650;</div><div class="num" id="pat3">04</div></div>
-                <div class="score-item item2"><div class="arrow">&#9650;</div><div class="num" id="pat2">15</div></div>
-                <div class="score-item item1"><div class="arrow">&#9650;</div><div class="num" id="pat1">38</div></div>
+                <div class="score-item item4"><div class="arrow">&#9650;</div><div class="num" id="pat4">${sheetData.score4}</div></div>
+                <div class="score-item item3"><div class="arrow">&#9650;</div><div class="num" id="pat3">${sheetData.score3}</div></div>
+                <div class="score-item item2"><div class="arrow">&#9650;</div><div class="num" id="pat2">${sheetData.score2}</div></div>
+                <div class="score-item item1"><div class="arrow">&#9650;</div><div class="num" id="pat1">${sheetData.score1}</div></div>
             </div>
             <div class="pattern-title">P A T T E R N</div>
         </div>
@@ -196,7 +209,6 @@ async function startRendering() {
     const page = await browser.newPage();
     await page.setContent(myHtml, { waitUntil: 'networkidle0', timeout: 90000 });
 
-    // Har animated element ko exact time offset (-t seconds) par step karke render karenge
     await page.addStyleTag({
         content: `
             * {
@@ -215,7 +227,6 @@ async function startRendering() {
             for (const el of allElements) {
                 const animName = getComputedStyle(el).animationName;
                 if (animName && animName !== 'none') {
-                    // Footer icons ka apna chhota animation-delay hai, baaki 12s timeline ke hisaab se chalte hain
                     if (el.classList.contains('icon')) {
                         let baseDelay = 0;
                         if (el.classList.contains('fb')) baseDelay = 0.2;
