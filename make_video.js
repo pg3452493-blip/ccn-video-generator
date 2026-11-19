@@ -16,6 +16,8 @@ const sheetData = {
     imageUrl: process.env.IMAGE_URL || 'https://images.unsplash.com/photo-1593341646782-e0b495cff86d?w=500'
 };
 
+console.log("📊 LOADED SHEET DATA:", JSON.stringify(sheetData, null, 2));
+
 // 🚀 SMART LOGO FINDER
 let logoBase64 = '';
 try {
@@ -43,6 +45,7 @@ const myHtml = `
     <title>12-Second Masterpiece Reel</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        * { box-sizing: border-box; }
         body { margin: 0; padding: 0; background-color: #000; overflow: hidden; display: block; width: 1080px; height: 1920px; }
         .video-container { width: 1080px; height: 1920px; background-color: #000; font-family: 'Impact', sans-serif; position: absolute; top: 0; left: 0; overflow: hidden; margin: 0; box-shadow: none; border: none; }
         
@@ -209,6 +212,7 @@ async function startRendering() {
     const page = await browser.newPage();
     await page.setContent(myHtml, { waitUntil: 'networkidle0', timeout: 90000 });
 
+    // FIX: Asterisk (*) lagaya taaki valid CSS ban sake aur animations pause hokar exact frame control le sakein
     await page.addStyleTag({
         content: `
             * {
