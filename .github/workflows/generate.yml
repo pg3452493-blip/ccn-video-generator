@@ -2,6 +2,43 @@ name: Generate Reel on Cloud
 
 on:
   workflow_dispatch:
+    inputs:
+      PLAYER_NAME:
+        description: 'Player Name'
+        required: false
+        default: 'SHAI HOPE'
+      TEAM_1:
+        description: 'Team 1'
+        required: false
+        default: 'INDIA'
+      TEAM_2:
+        description: 'Team 2'
+        required: false
+        default: 'AUSTRALIA'
+      NEXT_SCORE:
+        description: 'Next Score'
+        required: false
+        default: '15~ RUNS'
+      SCORE_1:
+        description: 'Score 1'
+        required: false
+        default: '38'
+      SCORE_2:
+        description: 'Score 2'
+        required: false
+        default: '15'
+      SCORE_3:
+        description: 'Score 3'
+        required: false
+        default: '04'
+      SCORE_4:
+        description: 'Score 4'
+        required: false
+        default: '45'
+      IMAGE_URL:
+        description: 'Player Image URL'
+        required: false
+        default: 'https://images.unsplash.com/photo-1593341646782-e0b495cff86d?w=500'
 
 jobs:
   build:
@@ -15,17 +52,26 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install FFmpeg, Xvfb & Browser
+      - name: Install FFmpeg & Browser
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg xvfb
+          sudo apt-get update && sudo apt-get install -y ffmpeg
           npx puppeteer browsers install chrome
 
       - name: Install Node Modules
         run: npm install
 
-      - name: Run Video Generator Script with Virtual Screen
-        run: xvfb-run --auto-servernum --server-args="-screen 0 1080x1920x24" node make_video.js
+      - name: Run Video Generator Script
+        env:
+          PLAYER_NAME: ${{ inputs.PLAYER_NAME }}
+          TEAM_1: ${{ inputs.TEAM_1 }}
+          TEAM_2: ${{ inputs.TEAM_2 }}
+          NEXT_SCORE: ${{ inputs.NEXT_SCORE }}
+          SCORE_1: ${{ inputs.SCORE_1 }}
+          SCORE_2: ${{ inputs.SCORE_2 }}
+          SCORE_3: ${{ inputs.SCORE_3 }}
+          SCORE_4: ${{ inputs.SCORE_4 }}
+          IMAGE_URL: ${{ inputs.IMAGE_URL }}
+        run: node make_video.js
 
       - name: Save Generated Video
         uses: actions/upload-artifact@v4
