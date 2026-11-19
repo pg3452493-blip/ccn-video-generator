@@ -212,38 +212,43 @@ async function startRendering() {
     const page = await browser.newPage();
     await page.setContent(myHtml, { waitUntil: 'networkidle0', timeout: 90000 });
 
-    // FIX: Asterisk (*) lagaya taaki valid CSS ban sake aur animations pause hokar exact frame control le sakein
-    await page.addStyleTag({
-        content: `
-            * {
-                animation-play-state: paused !important;
+    // Web Animations API se har frame par exact timeline seek karna
+    await page.evaluate(() => {
+        window.__seekToTime = (timeSec) => {
+            const timeMs = timeSec * 1000;
+            const elements = document.querySelectorAll('*');
+            for (const el of elements) {
+                const anims = el.getAnimations ? el.getAnimations() : [];
+                for (const anim of anims) {
+                    anim.pause();
+                    const timing = anim.effect ? anim.effect.getTiming() : {};
+                    const delay = timing.delay || 0;
+                    const duration = timing.duration || 0;
+                    const iterations = timing.iterations || 1;
+                    const totalActiveDuration = duration * (Number.isFinite(iterations) ? iterations : 1);
+
+                    if (!Number.isFinite(iterations) && duration > 0) {
+                        const localTime = ((timeMs - delay) % duration + duration) % duration;
+                        anim.currentTime = localTime;
+                    } else if (totalActiveDuration > 0) {
+                        const clampedTime = Math.max(0, Math.min(timeMs - delay, totalActiveDuration));
+                        anim.currentTime = clampedTime;
+                    } else {
+                        anim.currentTime = Math.max(0, timeMs - delay);
+                    }
+                }
             }
-        `
+        };
     });
 
     console.log(`📸 Exact ${totalFrames} frames (12s @ ${fps}fps) render ho rahe hain...`);
 
     for (let i = 0; i < totalFrames; i++) {
-        const currentTimeSec = (i / fps).toFixed(4);
+        const currentTimeSec = i / fps;
 
         await page.evaluate((t) => {
-            const allElements = document.querySelectorAll('*');
-            for (const el of allElements) {
-                const animName = getComputedStyle(el).animationName;
-                if (animName && animName !== 'none') {
-                    if (el.classList.contains('icon')) {
-                        let baseDelay = 0;
-                        if (el.classList.contains('fb')) baseDelay = 0.2;
-                        else if (el.classList.contains('wa')) baseDelay = 0.4;
-                        else if (el.classList.contains('yt')) baseDelay = 0.6;
-                        else if (el.classList.contains('ig')) baseDelay = 0.8;
-                        el.style.animationDelay = `${(baseDelay - t).toFixed(4)}s`;
-                    } else {
-                        el.style.animationDelay = `${(-t).toFixed(4)}s`;
-                    }
-                }
-            }
-        }, parseFloat(currentTimeSec));
+            window.__seekToTime(t);
+        }, currentTimeSec);
 
         const framePath = path.join(frameDir, `frame_${String(i).padStart(4, '0')}.jpg`);
         await page.screenshot({ path: framePath, type: 'jpeg', quality: 92 });
