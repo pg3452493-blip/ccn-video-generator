@@ -78,3 +78,16 @@ jobs:
         with:
           name: ccn-reel
           path: '*.mp4'
+
+      - name: Install googleapis
+        run: npm install googleapis
+
+      - name: Upload to YouTube Shorts
+        env:
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+          PLAYER_NAME: ${{ inputs.PLAYER_NAME }}
+          TEAM_1: ${{ inputs.TEAM_1 }}
+          TEAM_2: ${{ inputs.TEAM_2 }}
+        run: node upload_youtube.js
